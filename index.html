@@ -137,7 +137,24 @@ thead th.lm{background:linear-gradient(180deg,color-mix(in srgb,var(--head) 50%,
 .tbtn:hover{background:var(--f-hover)}
 #pdtTable{width:auto;min-width:min(100%,1390px);table-layout:fixed}
 #pdtTable col.c-lab{width:360px}#pdtTable col.c-n{width:80px}#pdtTable col.c-v{width:135px}#pdtTable col.c-m{width:150px}#pdtTable col.c-a{width:130px}
-#pdtTable .sep{border-left:2px solid var(--grid)}
+#pdtTable .sep,#nsTable .sep{border-left:2px solid var(--grid)}
+#nsTable{width:auto;min-width:min(100%,1390px);table-layout:fixed}
+#nsTable col.c-lab{width:360px}#nsTable col.c-n{width:80px}#nsTable col.c-s{width:112px}#nsTable col.c-e{width:110px}
+#nsTable th,#nsTable td{padding:8px 12px}
+#nsTable thead th{text-align:right}#nsTable thead th.l{text-align:left}
+#nsTable td.l{text-align:left;overflow:hidden;text-overflow:ellipsis}
+#nsTable tr.lv0 td{font-weight:600;background:color-mix(in srgb,var(--head) 9%,var(--surface))}
+#nsTable tr.lv1 td{font-weight:500;background:color-mix(in srgb,var(--head) 4%,var(--surface))}
+#nsTable tr.lv3 td{font-size:12.5px}
+#nsTable tr.tg{cursor:pointer}
+#nsTable .car{display:inline-block;width:16px;color:var(--muted);font-size:10px;transition:transform .15s}
+#nsTable tr.open .car{transform:rotate(90deg)}
+#nsTable .cnt{color:var(--muted);font-size:11.5px;font-weight:400;margin-left:6px}
+#nsTable td.ns{font-weight:700;color:var(--bad)}
+#nsTable td.ns0{color:var(--muted)}
+.nsb{display:inline-block;min-width:54px;padding:2px 8px;border-radius:99px;font-weight:600;font-size:12px;text-align:center}
+.nsb.h{background:var(--bad-bg);color:var(--bad)}.nsb.m{background:var(--warn-bg);color:var(--warn)}.nsb.l{background:var(--good-bg);color:var(--good)}
+#nsTable td.ck{color:var(--bad);font-weight:700;text-align:center}
 #pdtTable th,#pdtTable td{padding:8px 14px}
 #pdtTable thead th{text-align:right}#pdtTable thead th.l{text-align:left}
 #pdtTable td.l{text-align:left;overflow:hidden;text-overflow:ellipsis}
@@ -256,6 +273,18 @@ td.area{color:var(--ink-2)}
     <table id="pdtTable"><colgroup><col class="c-lab"><col class="c-n"><col class="c-v"><col class="c-v"><col class="c-v"><col class="c-m"><col class="c-a"><col class="c-a"><col class="c-m"></colgroup>
       <thead><tr id="pdtHead"></tr></thead>
       <tbody id="pdtBody"></tbody>
+    </table>
+  </div>
+</section>
+<section class="card table-card" style="margin-top:16px">
+  <div class="tbar">
+    <div><h3><span id="nsTitle">No Sale</span><span class="asof" id="nsAsof"></span></h3><div class="note" id="nsNote"></div></div>
+    <div class="tb-act"><button class="tbtn" id="nsExp">ขยายทั้งหมด</button><button class="tbtn" id="nsCol">ย่อทั้งหมด</button></div>
+  </div>
+  <div class="tscroll">
+    <table id="nsTable"><colgroup><col class="c-lab"><col class="c-n"><col class="c-s"><col class="c-s"><col class="c-s"><col class="c-s"><col class="c-s"><col class="c-e"><col class="c-e"><col class="c-e"><col class="c-e"></colgroup>
+      <thead><tr id="nsHead"></tr></thead>
+      <tbody id="nsBody"></tbody>
     </table>
   </div>
 </section>
@@ -425,7 +454,7 @@ function renderHero(){const M=D.meta[S.prod],c=v=>v==null?'':v>=1?'g':v>=.8?'w':
   $('heroKp').innerHTML=`<div>${fmt(tot.n)}<small>Staff</small></div><div>${fmtM(tot.a)}<small>Actual MTD</small></div><div>${fmtM(tot.rr)}<small>RR Actual</small></div><div class="${c(tot.rrach)}">${pct(tot.rrach)}<small>%RR Achieve</small></div><div class="${tot.mom==null?'':tot.mom>=0?'g':'r'}">${tot.mom==null?'–':(tot.mom>=0?'+':'')+pct(tot.mom)}<small>Month on Month</small></div>`}
 /* ---------- PDT tab ---------- */
 let TAB='perf';const OPEN=new Set();let pdtInit=false;
-$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;TAB=b.dataset.t;[...$('tabs').children].forEach(x=>x.classList.toggle('on',x===b));$('pPerf').hidden=TAB!=='perf';$('pPdt').hidden=TAB!=='pdt';if(TAB==='perf'){renderChart();renderTable()}else renderPDT();syncSticky()};
+$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;TAB=b.dataset.t;[...$('tabs').children].forEach(x=>x.classList.toggle('on',x===b));$('pPerf').hidden=TAB!=='perf';$('pPdt').hidden=TAB!=='pdt';if(TAB==='perf'){renderChart();renderTable()}else{renderPDT();renderNS()}syncSticky()};
 function pdtAgg(list){const P=D.prod[S.prod],n=list.length;let l=0,rr=0,aa=0,cq=0,cr=0,pq=0,pr=0;for(const r of list){l+=r.last;rr+=r.rr;aa+=r.a;cq+=+P.cq[r.i]||0;cr+=+P.cr[r.i]||0;pq+=+P.pq[r.i]||0;pr+=+P.pr[r.i]||0}const pl=n?l/n:null,pt=n?rr/n:null,al=pq?pr/pq:null,at=cq?cr/cq:null;return {n,pl,pt,pa:n?aa/n:null,d:pt-pl,mom:pl?pt/pl-1:null,al,at,ad:al!=null&&at!=null?at-al:null,amom:al&&at!=null?at/al-1:null}}
 function renderPDT(){
   if(!pdtInit){pdtInit=true;for(const r of staff)OPEN.add('R|'+r.region)}
@@ -451,12 +480,42 @@ function renderPDT(){
 $('pdtBody').onclick=e=>{const tr=e.target.closest('tr.tg');if(!tr)return;const k=tr.dataset.key;OPEN.has(k)?[...OPEN].filter(x=>x===k||x.startsWith(k+'|')).forEach(x=>OPEN.delete(x)):OPEN.add(k);renderPDT()};
 $('expAll').onclick=()=>{for(const r of rows){const k0='R|'+r.region,k1=k0+'|A|'+r.area;OPEN.add(k0);OPEN.add(k1);OPEN.add(k1+'|S|'+r.shop)}renderPDT()};
 $('colAll').onclick=()=>{OPEN.clear();renderPDT()};
+/* ---------- No Sale table ---------- */
+const NSO=new Set();let nsInit=false;
+function nsAgg(list){const P=D.prod[S.prod],n=list.length;let ns=0,nl=0;const e={};EMP_ORDER.forEach(k=>e[k]=0);
+  for(const r of list){const c=+P.cq[r.i]||0,p=+P.pq[r.i]||0;if(c<=0){ns++;e[r.emp]=(e[r.emp]||0)+1}if(p<=0)nl++}
+  return {n,ns,nl,pn:n?ns/n:null,pl:n?nl/n:null,d:ns-nl,e}}
+function renderNS(){
+  if(!nsInit){nsInit=true;for(const r of staff)NSO.add('R|'+r.region)}
+  const P=D.prod[S.prod],M=D.meta[S.prod];
+  $('nsTitle').textContent=`${P.name} · No Sale ราย Area`;
+  $('nsAsof').textContent=`Data As of ${fdate(M.asof)}`;
+  $('nsNote').textContent=`No Sale = พนักงานในชีท Target ที่ยังไม่มียอด ${P.name} (QTY = 0) · This Month = MTD 1–${M.days} ${mlab(D.cur)} · Last Month = ทั้งเดือน ${mlab(D.prev)} · Emp Type = จำนวน No Sale เดือนนี้ · คลิกแถวเพื่อ Drill Down`;
+  $('nsHead').innerHTML=`<th class="l">Region / Area / สาขา / พนักงาน</th><th>Staff</th><th class="lm sep">No Sale<br><small style="font-weight:400;opacity:.85">${mlab(D.prev)}</small></th><th class="lm">%No Sale<br><small style="font-weight:400;opacity:.85">${mlab(D.prev)}</small></th><th class="sep">No Sale<br><small style="font-weight:400;opacity:.85">MTD ${mlab(D.cur)}</small></th><th>%No Sale<br><small style="font-weight:400;opacity:.85">MTD ${mlab(D.cur)}</small></th><th>เปลี่ยนแปลง<br><small style="font-weight:400;opacity:.85">คน</small></th>`+EMP_ORDER.map((k,i)=>`<th${i?'':' class="sep"'}>${k}</th>`).join('');
+  const nb=v=>v==null?'–':`<span class="nsb ${v>=.2?'h':v>=.1?'m':'l'}">${pct(v)}</span>`;
+  const dc=d=>`<td class="${d>0?'down':d<0?'up':'zero'}">${d>0?'+':''}${fmt(d)}</td>`;
+  const cells=a=>`<td class="lm sep">${fmt(a.nl)}</td><td class="lm">${a.pl==null?'–':pct(a.pl)}</td><td class="sep ${a.ns?'ns':'ns0'}">${fmt(a.ns)}</td><td>${nb(a.pn)}</td>${dc(a.d)}`+EMP_ORDER.map((k,i)=>`<td class="${i?'':'sep '}${a.e[k]?'':'ns0'}">${a.e[k]?fmt(a.e[k]):'–'}</td>`).join('');
+  const by=(a,k)=>{const m=new Map();for(const r of a){if(!m.has(r[k]))m.set(r[k],[]);m.get(r[k]).push(r)}const rk=v=>String(v).replace(/\b(IV|V|III|II|I)\b/g,r=>({I:1,II:2,III:3,IV:4,V:5})[r]);return [...m.entries()].sort((x,y)=>rk(x[0]).localeCompare(rk(y[0]),'th',{numeric:true}))};
+  const row=(lv,key,label,list,a)=>`<tr class="lv${lv} tg${NSO.has(key)?' open':''}" data-key="${key}"><td class="l" style="padding-left:${12+lv*22}px"><span class="car">▶</span>${label}<span class="cnt">No Sale ${fmt(a.ns)}/${fmt(a.n)} คน</span></td><td>${fmt(a.n)}</td>${cells(a)}</tr>`;
+  const tot=nsAgg(rows);let h=`<tr class="total"><td class="l">รวม</td><td>${fmt(tot.n)}</td>${cells(tot)}</tr>`;
+  for(const [rg,ra] of by(rows,'region')){const k0='R|'+rg;h+=row(0,k0,rg,ra,nsAgg(ra));if(!NSO.has(k0))continue;
+    for(const [ar,aa] of by(ra,'area')){const k1=k0+'|A|'+ar;h+=row(1,k1,ar,aa,nsAgg(aa));if(!NSO.has(k1))continue;
+      for(const [sh,sa] of by(aa,'shop')){const k2=k1+'|S|'+sh,a2=nsAgg(sa);h+=row(2,k2,sh,sa,a2);if(!NSO.has(k2))continue;
+        const list=sa.filter(r=>(+P.cq[r.i]||0)<=0);
+        if(!list.length){h+=`<tr class="lv3"><td class="l" colspan="11" style="padding-left:${12+3*22+16}px;color:var(--good)">✓ ทุกคนมียอดขายแล้ว</td></tr>`;continue}
+        for(const r of list){const pq=+P.pq[r.i]||0;
+          h+=`<tr class="lv3"><td class="l" style="padding-left:${12+3*22+16}px">${r.name} <span class="et">${r.emp}</span> <span style="color:var(--muted);font-size:11px">${r.id}</span></td><td>1</td><td class="lm sep">${pq<=0?'No Sale':'–'}</td><td class="lm" style="font-size:11.5px">${pq<=0?'':'ขายได้ '+fmt(pq)}</td><td class="sep ns">No Sale</td><td></td><td></td>`+EMP_ORDER.map((k,i)=>`<td class="${i?'':'sep '}${r.emp===k?'ck':''}">${r.emp===k?'●':''}</td>`).join('')+`</tr>`}}}}
+  $('nsBody').innerHTML=h;
+}
+$('nsBody').onclick=e=>{const tr=e.target.closest('tr.tg');if(!tr)return;const k=tr.dataset.key;NSO.has(k)?[...NSO].filter(x=>x===k||x.startsWith(k+'|')).forEach(x=>NSO.delete(x)):NSO.add(k);renderNS();syncSticky()};
+$('nsExp').onclick=()=>{for(const r of rows){const k0='R|'+r.region,k1=k0+'|A|'+r.area;NSO.add(k0);NSO.add(k1);NSO.add(k1+'|S|'+r.shop)}renderNS()};
+$('nsCol').onclick=()=>{NSO.clear();renderNS()};
 const fEl=document.querySelector('.filters');
 function syncSticky(){const wide=innerWidth>1100,fh=wide?fEl.offsetHeight+8:0;document.documentElement.style.setProperty('--fh',fh+'px');
   document.querySelectorAll('table').forEach(t=>{const th=t.tHead;if(th)t.style.setProperty('--th-top',(wide?fh:0)+th.offsetHeight+'px')})}
 window.addEventListener('scroll',()=>fEl.classList.toggle('stuck',fEl.getBoundingClientRect().top<=9),{passive:true});
 window.addEventListener('resize',syncSticky);
-function render(){applyHead();compute();renderHero();renderKPI();if(TAB==='perf'){renderChart();renderTable()}else renderPDT();syncSticky()}
+function render(){applyHead();compute();renderHero();renderKPI();if(TAB==='perf'){renderChart();renderTable()}else{renderPDT();renderNS()}syncSticky()}
 
 /* ---------- init ---------- */
 const ad=D.asof.split('-');
