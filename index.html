@@ -138,6 +138,15 @@ thead th.lm{background:linear-gradient(180deg,color-mix(in srgb,var(--head) 50%,
 #pdtTable{width:auto;min-width:min(100%,1390px);table-layout:fixed}
 #pdtTable col.c-lab{width:360px}#pdtTable col.c-n{width:80px}#pdtTable col.c-v{width:135px}#pdtTable col.c-m{width:150px}#pdtTable col.c-a{width:130px}
 #pdtTable .sep,#nsTable .sep{border-left:2px solid var(--grid)}
+#ovTable{width:100%;table-layout:fixed}
+#ovTable th,#ovTable td{padding:7px 10px}
+#ovTable thead th.l{text-align:left}#ovTable thead th.c{text-align:center}
+#ovTable td.c{text-align:center}
+#ovTable td.l{text-align:left;overflow:hidden;text-overflow:ellipsis}
+#ovTable thead th.pc{background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 85%,#fff),var(--pc))!important}
+#ovTable thead th.pc.sel{box-shadow:inset 0 -4px 0 #0b1f33}
+#ovTable td.selc{background:color-mix(in srgb,var(--surface-2) 70%,transparent)}
+#ovTable .badge{min-width:66px}
 #nsTable{width:auto;min-width:min(100%,1390px);table-layout:fixed}
 #nsTable col.c-lab{width:360px}#nsTable col.c-n{width:80px}#nsTable col.c-s{width:112px}#nsTable col.c-e{width:110px}
 #nsTable th,#nsTable td{padding:8px 12px}
@@ -239,8 +248,23 @@ td.area{color:var(--ink-2)}
 
 <section class="kpis" id="kpis"></section>
 
-<nav class="tabs" id="tabs"><button class="tab on" data-t="perf"><span class="ti">📊</span>Performance Staff</button><button class="tab" data-t="pdt"><span class="ti">👥</span>PDT Staff</button></nav>
-<div id="pPerf">
+<nav class="tabs" id="tabs"><button class="tab on" data-t="ovr"><span class="ti">🏆</span>Overall PFM</button><button class="tab" data-t="perf"><span class="ti">📊</span>Performance Staff</button><button class="tab" data-t="pdt"><span class="ti">👥</span>PDT Staff</button></nav>
+<div id="pOvr">
+<section class="card table-card">
+  <div class="tbar">
+    <div><h3><span id="ovTitle">Overall PFM</span><span class="asof" id="ovAsof"></span></h3><div class="note" id="ovNote"></div></div>
+    <input class="search" id="ovSearch" placeholder="ค้นหาชื่อ / Sale ID / สาขา">
+  </div>
+  <div class="tscroll">
+    <table id="ovTable"><colgroup><col style="width:230px"><col style="width:300px"><col style="width:120px"><col span="6" style="width:118px"></colgroup>
+      <thead><tr id="ovHead"></tr></thead>
+      <tbody id="ovBody"></tbody>
+    </table>
+  </div>
+  <div class="foot"><span id="ovCount"></span></div>
+</section>
+</div>
+<div id="pPerf" hidden>
 <section class="card chart-card">
   <div class="ctitle">
     <h3 id="chartTitle">ยอดขายรายวัน</h3>
@@ -453,8 +477,8 @@ function renderHero(){const M=D.meta[S.prod],c=v=>v==null?'':v>=1?'g':v>=.8?'w':
   $('heroAsof').textContent=`📅 Data As of ${fdate(M.asof)}`;
   $('heroKp').innerHTML=`<div>${fmt(tot.n)}<small>Staff</small></div><div>${fmtM(tot.a)}<small>Actual MTD</small></div><div>${fmtM(tot.rr)}<small>RR Actual</small></div><div class="${c(tot.rrach)}">${pct(tot.rrach)}<small>%RR Achieve</small></div><div class="${tot.mom==null?'':tot.mom>=0?'g':'r'}">${tot.mom==null?'–':(tot.mom>=0?'+':'')+pct(tot.mom)}<small>Month on Month</small></div>`}
 /* ---------- PDT tab ---------- */
-let TAB='perf';const OPEN=new Set();let pdtInit=false;
-$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;TAB=b.dataset.t;[...$('tabs').children].forEach(x=>x.classList.toggle('on',x===b));$('pPerf').hidden=TAB!=='perf';$('pPdt').hidden=TAB!=='pdt';if(TAB==='perf'){renderChart();renderTable()}else{renderPDT();renderNS()}syncSticky()};
+let TAB='ovr';const OPEN=new Set();let pdtInit=false;
+$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;TAB=b.dataset.t;[...$('tabs').children].forEach(x=>x.classList.toggle('on',x===b));$('pOvr').hidden=TAB!=='ovr';$('pPerf').hidden=TAB!=='perf';$('pPdt').hidden=TAB!=='pdt';renderTab();syncSticky()};
 function pdtAgg(list){const P=D.prod[S.prod],n=list.length;let l=0,rr=0,aa=0,cq=0,cr=0,pq=0,pr=0;for(const r of list){l+=r.last;rr+=r.rr;aa+=r.a;cq+=+P.cq[r.i]||0;cr+=+P.cr[r.i]||0;pq+=+P.pq[r.i]||0;pr+=+P.pr[r.i]||0}const pl=n?l/n:null,pt=n?rr/n:null,al=pq?pr/pq:null,at=cq?cr/cq:null;return {n,pl,pt,pa:n?aa/n:null,d:pt-pl,mom:pl?pt/pl-1:null,al,at,ad:al!=null&&at!=null?at-al:null,amom:al&&at!=null?at/al-1:null}}
 function renderPDT(){
   if(!pdtInit){pdtInit=true;for(const r of staff)OPEN.add('R|'+r.region)}
@@ -480,6 +504,32 @@ function renderPDT(){
 $('pdtBody').onclick=e=>{const tr=e.target.closest('tr.tg');if(!tr)return;const k=tr.dataset.key;OPEN.has(k)?[...OPEN].filter(x=>x===k||x.startsWith(k+'|')).forEach(x=>OPEN.delete(x)):OPEN.add(k);renderPDT()};
 $('expAll').onclick=()=>{for(const r of rows){const k0='R|'+r.region,k1=k0+'|A|'+r.area;OPEN.add(k0);OPEN.add(k1);OPEN.add(k1+'|S|'+r.shop)}renderPDT()};
 $('colAll').onclick=()=>{OPEN.clear();renderPDT()};
+function renderTab(){if(TAB==='perf'){renderChart();renderTable()}else if(TAB==='pdt'){renderPDT();renderNS()}else renderOvr()}
+/* ---------- Overall PFM ---------- */
+const OV={sort:{k:'p_'+'postpay',dir:-1},q:''};
+const HEADC={postpay:['#ef6c00','#fff'],prepay:['#f2b705','#2b2100'],tol:['#0582c8','#fff'],tvs:['#e0457b','#fff'],device:['#6b7785','#fff'],gia:['#7b3fbf','#fff']};
+function renderOvr(){
+  const m=S.m;
+  const f=staff.filter(s=>(!S.region||s.region===S.region)&&(!S.area||s.area===S.area)&&(!S.shop||s.shop===S.shop)&&(!S.emp||s.emp===S.emp));
+  const tot={};
+  const list=f.map(s=>{const o={...s};for(const k of PRODS){const P=D.prod[k],M=D.meta[k],t=+(m==='q'?P.tq:P.tr)[s.i]||0,a=+(m==='q'?P.cq:P.cr)[s.i]||0,rr=a*M.dim/M.days;
+      o['p_'+k]=t?rr/t:null;tot[k]=tot[k]||{t:0,rr:0};tot[k].t+=t;tot[k].rr+=rr}return o});
+  $('ovTitle').textContent=`Overall PFM · %RR Achieve ราย Staff (${m==='q'?'QTY':'Revenue'})`;
+  $('ovAsof').textContent=`Data As of ${fdate(D.asof)}`;
+  $('ovNote').textContent=`%RR Achieve = RR ÷ Target ของแต่ละ Product · จำนวนวันที่ใช้คิด RR: `+PRODS.map(k=>`${D.prod[k].name} ${D.meta[k].days} วัน`).join(', ')+` · คลิกหัวคอลัมน์เพื่อเรียง`;
+  const {k,dir}=OV.sort;
+  const cols=[{k:'name',l:'ชื่อพนักงาน',c:'l'},{k:'shop',l:'สาขา',c:'l'},{k:'emp',l:'Emp Type',c:'l'}].concat(PRODS.map(p=>({k:'p_'+p,l:D.prod[p].name,p})));
+  $('ovHead').innerHTML=cols.map(c=>c.p?`<th class="c pc${c.p===S.prod?' sel':''}" data-k="${c.k}" style="--pc:${HEADC[c.p][0]};color:${HEADC[c.p][1]};${HEADC[c.p][1]!=='#fff'?'text-shadow:none':''}">${c.l}${k===c.k?`<span class="ar" style="color:inherit">${dir>0?'▲':'▼'}</span>`:''}</th>`:`<th class="${c.c}" data-k="${c.k}">${c.l}${k===c.k?`<span class="ar">${dir>0?'▲':'▼'}</span>`:''}</th>`).join('');
+  let r=list;if(OV.q)r=r.filter(x=>(x.name+' '+x.id+' '+x.shop).toLowerCase().includes(OV.q));
+  r=[...r].sort((a,b)=>{let x=a[k],y=b[k];if(typeof x==='string'||typeof y==='string')return String(x).localeCompare(String(y),'th')*dir;x=x??-Infinity;y=y??-Infinity;return (x-y)*dir});
+  const pc=p=>p===S.prod?' selc':'';
+  let h=`<tr class="total"><td class="l">รวม (${fmt(r.length)} คน)</td><td></td><td></td>`+PRODS.map(p=>{const tt=tot[p],v=tt&&tt.t?tt.rr/tt.t:null;return `<td class="c${pc(p)}"><span class="badge ${cls(v)}">${pct(v)}</span></td>`}).join('')+`</tr>`;
+  h+=r.map(x=>`<tr><td class="l name" title="${x.name}">${x.name}<div style="font-size:11px;color:var(--muted);font-weight:400">${x.id}</div></td><td class="l shop" title="${x.shop}">${x.shop}<div style="font-size:11px;color:var(--muted)">${x.area}</div></td><td class="l"><span class="et">${x.emp}</span></td>`+PRODS.map(p=>`<td class="c${pc(p)}"><span class="badge ${cls(x['p_'+p])}">${pct(x['p_'+p])}</span></td>`).join('')+`</tr>`).join('');
+  $('ovBody').innerHTML=h;
+  $('ovCount').textContent=`แสดง ${fmt(r.length)} คน · สีเขียว ≥100% · เหลือง 80–99% · แดง <80% · "–" = ไม่มีเป้า`;
+}
+$('ovHead').onclick=e=>{const th=e.target.closest('th');if(!th)return;const k=th.dataset.k;OV.sort=OV.sort.k===k?{k,dir:-OV.sort.dir}:{k,dir:['name','shop','emp'].includes(k)?1:-1};renderOvr();syncSticky()};
+$('ovSearch').oninput=e=>{OV.q=e.target.value.trim().toLowerCase();renderOvr()};
 /* ---------- No Sale table ---------- */
 const NSO=new Set();let nsInit=false;
 function nsAgg(list){const P=D.prod[S.prod],n=list.length;let ns=0,nl=0;const e={};EMP_ORDER.forEach(k=>e[k]=0);
@@ -515,7 +565,7 @@ function syncSticky(){const wide=innerWidth>1100,fh=wide?fEl.offsetHeight+8:0;do
   document.querySelectorAll('table').forEach(t=>{const th=t.tHead;if(th)t.style.setProperty('--th-top',(wide?fh:0)+th.offsetHeight+'px')})}
 window.addEventListener('scroll',()=>fEl.classList.toggle('stuck',fEl.getBoundingClientRect().top<=9),{passive:true});
 window.addEventListener('resize',syncSticky);
-function render(){applyHead();compute();renderHero();renderKPI();if(TAB==='perf'){renderChart();renderTable()}else{renderPDT();renderNS()}syncSticky()}
+function render(){applyHead();compute();renderHero();renderKPI();if(TAB==='perf'){renderChart();renderTable()}else if(TAB==='pdt'){renderPDT();renderNS()}else renderOvr();syncSticky()}
 
 /* ---------- init ---------- */
 const ad=D.asof.split('-');
