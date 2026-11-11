@@ -147,6 +147,18 @@ thead th.lm{background:linear-gradient(180deg,color-mix(in srgb,var(--head) 50%,
 #ovTable thead th.pc.sel{box-shadow:inset 0 -4px 0 #0b1f33}
 #ovTable td.selc{background:color-mix(in srgb,var(--surface-2) 70%,transparent)}
 #ovTable .badge{min-width:66px}
+#shTable{width:100%;table-layout:fixed}
+#shTable th,#shTable td{padding:8px 10px}
+#shTable thead th.l{text-align:left}#shTable td.l{text-align:left;overflow:hidden;text-overflow:ellipsis}
+#shTable tr.sh td{font-weight:500;background:color-mix(in srgb,var(--head) 5%,var(--surface));cursor:pointer}
+#shTable tr.sh:hover td{background:var(--accent-soft)}
+#shTable tr.sh .car{display:inline-block;width:16px;color:var(--muted);font-size:10px;transition:transform .15s}
+#shTable tr.sh.open .car{transform:rotate(90deg)}
+#shTable tr.st td{font-size:12.5px}
+#shTable .sub{display:block;font-size:11px;color:var(--muted);font-weight:400}
+#shTable td.mom small{display:inline;margin-left:5px}
+#shTable .nsx{color:var(--bad);font-weight:600}
+.tb-act .search{width:220px}
 #nsTable{width:auto;min-width:min(100%,1390px);table-layout:fixed}
 #nsTable col.c-lab{width:360px}#nsTable col.c-n{width:80px}#nsTable col.c-s{width:112px}#nsTable col.c-e{width:110px}
 #nsTable th,#nsTable td{padding:8px 12px}
@@ -248,7 +260,7 @@ td.area{color:var(--ink-2)}
 
 <section class="kpis" id="kpis"></section>
 
-<nav class="tabs" id="tabs"><button class="tab on" data-t="ovr"><span class="ti">🏆</span>Overall PFM</button><button class="tab" data-t="perf"><span class="ti">📊</span>Performance Staff</button><button class="tab" data-t="pdt"><span class="ti">👥</span>PDT Staff</button></nav>
+<nav class="tabs" id="tabs"><button class="tab on" data-t="ovr"><span class="ti">🏆</span>Overall PFM</button><button class="tab" data-t="perf"><span class="ti">📊</span>Performance Staff</button><button class="tab" data-t="pdt"><span class="ti">👥</span>PDT Staff</button><button class="tab" data-t="shop"><span class="ti">🏬</span>Shop Monitor</button></nav>
 <div id="pOvr">
 <section class="card table-card">
   <div class="tbar">
@@ -314,6 +326,21 @@ td.area{color:var(--ink-2)}
 </section>
 </div>
 
+<div id="pShop" hidden>
+<section class="card table-card">
+  <div class="tbar">
+    <div><h3><span id="shTitle">Shop Monitor</span><span class="asof" id="shAsof"></span></h3><div class="note" id="shNote"></div></div>
+    <div class="tb-act"><input class="search" id="shSearch" placeholder="ค้นหาสาขา / ชื่อ / Sale ID"><button class="tbtn" id="shExp">ขยายทั้งหมด</button><button class="tbtn" id="shCol">ย่อทั้งหมด</button></div>
+  </div>
+  <div class="tscroll">
+    <table id="shTable"><colgroup><col style="width:330px"><col style="width:70px"><col span="2" style="width:105px"><col style="width:100px"><col style="width:110px"><col style="width:105px"><col style="width:140px"><col style="width:110px"><col style="width:105px"></colgroup>
+      <thead><tr id="shHead"></tr></thead>
+      <tbody id="shBody"></tbody>
+    </table>
+  </div>
+  <div class="foot"><span id="shCount"></span></div>
+</section>
+</div>
 <div class="notes" id="notes"></div>
 </div>
 
@@ -478,7 +505,7 @@ function renderHero(){const M=D.meta[S.prod],c=v=>v==null?'':v>=1?'g':v>=.8?'w':
   $('heroKp').innerHTML=`<div>${fmt(tot.n)}<small>Staff</small></div><div>${fmtM(tot.a)}<small>Actual MTD</small></div><div>${fmtM(tot.rr)}<small>RR Actual</small></div><div class="${c(tot.rrach)}">${pct(tot.rrach)}<small>%RR Achieve</small></div><div class="${tot.mom==null?'':tot.mom>=0?'g':'r'}">${tot.mom==null?'–':(tot.mom>=0?'+':'')+pct(tot.mom)}<small>Month on Month</small></div>`}
 /* ---------- PDT tab ---------- */
 let TAB='ovr';const OPEN=new Set();let pdtInit=false;
-$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;TAB=b.dataset.t;[...$('tabs').children].forEach(x=>x.classList.toggle('on',x===b));$('pOvr').hidden=TAB!=='ovr';$('pPerf').hidden=TAB!=='perf';$('pPdt').hidden=TAB!=='pdt';renderTab();syncSticky()};
+$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;TAB=b.dataset.t;[...$('tabs').children].forEach(x=>x.classList.toggle('on',x===b));$('pOvr').hidden=TAB!=='ovr';$('pPerf').hidden=TAB!=='perf';$('pPdt').hidden=TAB!=='pdt';$('pShop').hidden=TAB!=='shop';renderTab();syncSticky()};
 function pdtAgg(list){const P=D.prod[S.prod],n=list.length;let l=0,rr=0,aa=0,cq=0,cr=0,pq=0,pr=0;for(const r of list){l+=r.last;rr+=r.rr;aa+=r.a;cq+=+P.cq[r.i]||0;cr+=+P.cr[r.i]||0;pq+=+P.pq[r.i]||0;pr+=+P.pr[r.i]||0}const pl=n?l/n:null,pt=n?rr/n:null,al=pq?pr/pq:null,at=cq?cr/cq:null;return {n,pl,pt,pa:n?aa/n:null,d:pt-pl,mom:pl?pt/pl-1:null,al,at,ad:al!=null&&at!=null?at-al:null,amom:al&&at!=null?at/al-1:null}}
 function renderPDT(){
   if(!pdtInit){pdtInit=true;for(const r of staff)OPEN.add('R|'+r.region)}
@@ -504,7 +531,43 @@ function renderPDT(){
 $('pdtBody').onclick=e=>{const tr=e.target.closest('tr.tg');if(!tr)return;const k=tr.dataset.key;OPEN.has(k)?[...OPEN].filter(x=>x===k||x.startsWith(k+'|')).forEach(x=>OPEN.delete(x)):OPEN.add(k);renderPDT()};
 $('expAll').onclick=()=>{for(const r of rows){const k0='R|'+r.region,k1=k0+'|A|'+r.area;OPEN.add(k0);OPEN.add(k1);OPEN.add(k1+'|S|'+r.shop)}renderPDT()};
 $('colAll').onclick=()=>{OPEN.clear();renderPDT()};
-function renderTab(){if(TAB==='perf'){renderChart();renderTable()}else if(TAB==='pdt'){renderPDT();renderNS()}else renderOvr()}
+function renderTab(){if(TAB==='perf'){renderChart();renderTable()}else if(TAB==='pdt'){renderPDT();renderNS()}else if(TAB==='shop')renderShop();else renderOvr()}
+/* ---------- Shop Monitor ---------- */
+const SH={sort:{k:'rrach',dir:-1},q:'',open:new Set()};
+function shAgg(list){const P=D.prod[S.prod];const o=list.reduce((o,r)=>(o.t+=r.t,o.a+=r.a,o.rr+=r.rr,o.last+=r.last,o.ns+=((+P.cq[r.i]||0)<=0?1:0),o),{t:0,a:0,rr:0,last:0,ns:0});
+  o.n=list.length;o.ach=o.t?o.a/o.t:null;o.rrach=o.t?o.rr/o.t:null;o.momd=o.rr-o.last;o.mom=o.last?o.rr/o.last-1:null;o.pns=o.n?o.ns/o.n:null;return o}
+function renderShop(){
+  const P=D.prod[S.prod],M=D.meta[S.prod],u=S.m==='q'?'QTY':'Revenue';
+  $('shTitle').textContent=`${P.name} · Shop Monitor (${u})`;
+  $('shAsof').textContent=`Data As of ${fdate(M.asof)}`;
+  $('shNote').textContent=`ยอดสาขา = ผลรวม Staff ในชีท Target by staff · RR = Actual ÷ ${M.days} × ${M.dim} · MoM = RR เทียบ Actual ทั้งเดือน ${mlab(D.prev)} · No Sale = Staff ที่ยังไม่มียอด (QTY = 0) · คลิกสาขาเพื่อดูพนักงาน`;
+  const C=[['name','สาขา / พนักงาน','l'],['n','Staff'],['t','Target'],['a','Actual'],['ach','%Achieve'],['rr','RR Actual'],['rrach','%RR Achieve'],['mom','Month on Month'],['last','Actual เดือนก่อน','lm'],['ns','No Sale']];
+  const {k,dir}=SH.sort;
+  $('shHead').innerHTML=C.map(c=>`<th class="${c[2]||''}" data-k="${c[0]}">${c[1]}${k===c[0]?`<span class="ar">${dir>0?'▲':'▼'}</span>`:''}</th>`).join('');
+  const g=new Map();for(const r of rows){if(!g.has(r.shop))g.set(r.shop,[]);g.get(r.shop).push(r)}
+  let shops=[...g.entries()].map(([name,list])=>({name,area:list[0].area,list,...shAgg(list)}));
+  const q=SH.q;
+  if(q)shops=shops.filter(s=>s.name.toLowerCase().includes(q)||s.list.some(r=>(r.name+' '+r.id).toLowerCase().includes(q)));
+  const cmp=(a,b)=>{let x=a[k],y=b[k];if(typeof x==='string'||typeof y==='string')return String(x).localeCompare(String(y),'th')*dir;x=x??-Infinity;y=y??-Infinity;return (x-y)*dir};
+  shops.sort(cmp);
+  const mom=(m,d)=>{const c=m==null?'zero':m>=0?'up':'down';return `<td class="mom ${c}">${m==null?'–':(m>=0?'+':'')+pct(m)}<small>${d>=0?'+':''}${fmtM(d)}</small></td>`};
+  const cells=x=>`<td>${fmtM(x.t)}</td><td>${fmtM(x.a)}</td><td><span class="badge ${cls(x.ach)}">${pct(x.ach)}</span></td><td>${fmtM(x.rr)}</td><td><span class="badge ${cls(x.rrach)}">${pct(x.rrach)}</span></td>${mom(x.mom,x.momd)}<td class="lm">${fmtM(x.last)}</td>`;
+  const tot=shAgg(shops.flatMap(s=>s.list));
+  let h=`<tr class="total"><td class="l">รวม (${fmt(shops.length)} สาขา)</td><td>${fmt(tot.n)}</td>${cells(tot)}<td>${fmt(tot.ns)} <span class="sub" style="display:inline">(${pct(tot.pns)})</span></td></tr>`;
+  for(const s of shops){const op=SH.open.has(s.name)||(q&&!s.name.toLowerCase().includes(q));
+    h+=`<tr class="sh${op?' open':''}" data-s="${s.name.replace(/"/g,'&quot;')}"><td class="l" title="${s.name}"><span class="car">▶</span>${s.name}<span class="sub" style="padding-left:16px">${s.area}</span></td><td>${fmt(s.n)}</td>${cells(s)}<td class="${s.ns?'nsx':'zero'}">${fmt(s.ns)} <span class="sub" style="display:inline">(${pct(s.pns)})</span></td></tr>`;
+    if(!op)continue;
+    let L=s.list;if(q&&!s.name.toLowerCase().includes(q))L=L.filter(r=>(r.name+' '+r.id).toLowerCase().includes(q));
+    for(const r of [...L].sort(cmp)){const ns=(+D.prod[S.prod].cq[r.i]||0)<=0;
+      h+=`<tr class="st"><td class="l" style="padding-left:34px" title="${r.name}">${r.name} <span class="et">${r.emp}</span><span class="sub">${r.id}</span></td><td>1</td>${cells(r)}<td class="${ns?'nsx':'zero'}">${ns?'No Sale':'–'}</td></tr>`}}
+  $('shBody').innerHTML=h;
+  $('shCount').textContent=`แสดง ${fmt(shops.length)} สาขา · ${fmt(tot.n)} คน`;
+}
+$('shBody').onclick=e=>{const tr=e.target.closest('tr.sh');if(!tr)return;const k=tr.dataset.s;SH.open.has(k)?SH.open.delete(k):SH.open.add(k);renderShop()};
+$('shHead').onclick=e=>{const th=e.target.closest('th');if(!th)return;const k=th.dataset.k;SH.sort=SH.sort.k===k?{k,dir:-SH.sort.dir}:{k,dir:k==='name'?1:-1};renderShop();syncSticky()};
+$('shSearch').oninput=e=>{SH.q=e.target.value.trim().toLowerCase();renderShop()};
+$('shExp').onclick=()=>{for(const r of rows)SH.open.add(r.shop);renderShop()};
+$('shCol').onclick=()=>{SH.open.clear();renderShop()};
 /* ---------- Overall PFM ---------- */
 const OV={sort:{k:'p_'+'postpay',dir:-1},q:''};
 const HEADC={postpay:['#ef6c00','#fff'],prepay:['#f2b705','#2b2100'],tol:['#0582c8','#fff'],tvs:['#e0457b','#fff'],device:['#6b7785','#fff'],gia:['#7b3fbf','#fff']};
@@ -565,7 +628,7 @@ function syncSticky(){const wide=innerWidth>1100,fh=wide?fEl.offsetHeight+8:0;do
   document.querySelectorAll('table').forEach(t=>{const th=t.tHead;if(th)t.style.setProperty('--th-top',(wide?fh:0)+th.offsetHeight+'px')})}
 window.addEventListener('scroll',()=>fEl.classList.toggle('stuck',fEl.getBoundingClientRect().top<=9),{passive:true});
 window.addEventListener('resize',syncSticky);
-function render(){applyHead();compute();renderHero();renderKPI();if(TAB==='perf'){renderChart();renderTable()}else if(TAB==='pdt'){renderPDT();renderNS()}else renderOvr();syncSticky()}
+function render(){applyHead();compute();renderHero();renderKPI();if(TAB==='perf'){renderChart();renderTable()}else if(TAB==='pdt'){renderPDT();renderNS()}else if(TAB==='shop')renderShop();else renderOvr();syncSticky()}
 
 /* ---------- init ---------- */
 const ad=D.asof.split('-');
